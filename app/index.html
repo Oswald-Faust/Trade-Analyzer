@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Phinea Trade Analyzer - Analysez et simulez vos performances de trading avec précision">
+    <title>Phinea Trade Analyzer | Analyse & Simulation de Trading</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Apply theme immediately to prevent flash
+        (function() {
+            const theme = localStorage.getItem('phinea-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="floating-orbs">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-section">
+                <div class="logo">
+                    <svg viewBox="0 0 40 40" class="logo-icon">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00f5d4"/>
+                                <stop offset="50%" style="stop-color:#7b2cbf"/>
+                                <stop offset="100%" style="stop-color:#e91e63"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M20 2 L38 11 L38 29 L20 38 L2 29 L2 11 Z" fill="none" stroke="url(#logoGrad)" stroke-width="2"/>
+                        <path d="M8 18 L16 26 L32 10" fill="none" stroke="url(#logoGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="logo-text">
+                        <span class="logo-name">Trade Analyzer</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="header-nav">
+                <button class="nav-btn active" data-section="import">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span>Import</span>
+                </button>
+                <button class="nav-btn" data-section="analysis" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                    <span>Analyse</span>
+                </button>
+                <button class="nav-btn" data-section="simulation" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span>Simulation</span>
+                </button>
+            </nav>
+            <div class="header-actions">
+                <button class="btn-icon" id="themeToggle" title="Changer le thème">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Section Import -->
+            <section class="section section-import active" id="section-import">
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <span class="title-gradient">Importez vos données</span>
+                    </h1>
+                    <p class="section-description">
+                        Glissez-déposez votre rapport MT4/MT5 et les données de l'actif pour commencer l'analyse
+                    </p>
+                </div>
+
+                <div class="import-grid">
+                    <!-- MT4/MT5 Import -->
+                    <div class="import-card" id="mt-import">
+                        <div class="import-dropzone" id="dropzone-mt">
+                            <div class="dropzone-content">
+                                <div class="dropzone-icon">
+                                    <svg viewBox="0 0 64 64" fill="none">
+                                        <rect x="8" y="4" width="48" height="56" rx="4" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M16 20h32M16 28h24M16 36h28M16 44h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <circle cx="48" cy="48" r="12" fill="#00f5d4" opacity="0.2"/>
+                                        <path d="M48 42v12M42 48h12" stroke="#00f5d4" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                                <h3>Rapport MT4/MT5</h3>
+                                <p>Fichier HTML de votre historique de trading</p>
+                                <div class="dropzone-hint">
+                                    <span class="hint-drag">Glissez votre fichier ici</span>
+                                    <span class="hint-or">ou</span>
+                                    <button class="btn btn-outline btn-sm" id="btn-browse-mt">Parcourir</button>
+                                </div>
+                                <input type="file" id="file-mt" accept=".html,.htm" hidden>
+                            </div>
+                            <div class="dropzone-success" hidden>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                <span class="success-filename"></span>
+                                <button class="btn-remove" title="Supprimer">×</button>
+                            </div>
+                        </div>
+                        <div class="import-preview" id="preview-mt" hidden>
+                            <div class="preview-header">
+                                <h4>Aperçu du rapport</h4>
+                            </div>
+                            <div class="preview-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Compte</span>
+                                    <span class="stat-value" id="stat-account">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Trades</span>
+                                    <span class="stat-value" id="stat-trades">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Période</span>
+                                    <span class="stat-value" id="stat-period">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">P&L</span>
+                                    <span class="stat-value" id="stat-pnl">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Asset Data Import -->
+                    <div class="import-card" id="asset-import">
+                        <div class="import-dropzone" id="dropzone-asset">
+                            <div class="dropzone-content">
+                                <div class="dropzone-icon">
+                                    <svg viewBox="0 0 64 64" fill="none">
+                                        <path d="M8 48 L20 32 L32 40 L44 24 L56 36" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <circle cx="20" cy="32" r="3" fill="#7b2cbf"/>
+                                        <circle cx="32" cy="40" r="3" fill="#7b2cbf"/>
+                                        <circle cx="44" cy="24" r="3" fill="#7b2cbf"/>
+                                        <circle cx="56" cy="36" r="3" fill="#7b2cbf"/>
+                                        <rect x="4" y="8" width="56" height="48" rx="4" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
+                                </div>
+                                <h3>Données de l'actif</h3>
+                                <p>Fichier CSV avec les prix historiques (optionnel)</p>
+                                <div class="dropzone-hint">
+                                    <span class="hint-drag">Glissez votre fichier ici</span>
+                                    <span class="hint-or">ou</span>
+                                    <button class="btn btn-outline btn-sm" id="btn-browse-asset">Parcourir</button>
+                                </div>
+                                <input type="file" id="file-asset" accept=".csv" hidden>
+                            </div>
+                            <div class="dropzone-success" hidden>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                <span class="success-filename"></span>
+                                <button class="btn-remove" title="Supprimer">×</button>
+                            </div>
+                        </div>
+                        <div class="import-preview" id="preview-asset" hidden>
+                            <div class="preview-header">
+                                <h4>Aperçu des données</h4>
+                            </div>
+                            <div class="preview-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Actif</span>
+                                    <span class="stat-value" id="stat-asset-name">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Points</span>
+                                    <span class="stat-value" id="stat-datapoints">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Période</span>
+                                    <span class="stat-value" id="stat-asset-period">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Variation</span>
+                                    <span class="stat-value" id="stat-asset-change">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Section -->
+                <div class="config-section">
+                    <h3 class="config-title">Configuration du Graphique</h3>
+                    
+                    <!-- Row 1: Capital and Date Range -->
+                    <div class="config-row">
+                        <!-- Capital Initial -->
+                        <div class="config-item config-item-large">
+                            <label class="config-label" for="initial-capital">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"/>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                                Capital Initial (Simulation)
+                            </label>
+                            <div class="config-input-group">
+                                <span class="input-prefix">$</span>
+                                <input type="number" id="initial-capital" class="config-input" value="1000" min="1" step="100">
+                            </div>
+                            <p class="config-hint">Les profits seront calculés proportionnellement à ce capital</p>
+                        </div>
+                        
+                        <!-- Date Range -->
+                        <div class="config-item config-item-large">
+                            <label class="config-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                                Période d'Analyse
+                            </label>
+                            <div class="date-range-row">
+                                <div class="date-input-wrapper">
+                                    <span class="date-label">Du</span>
+                                    <input type="date" id="config-date-start" class="config-input">
+                                </div>
+                                <div class="date-input-wrapper">
+                                    <span class="date-label">Au</span>
+                                    <input type="date" id="config-date-end" class="config-input">
+                                </div>
+                            </div>
+                            <p class="config-hint">Filtrer les trades par période (vide = toute la période)</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Row 2: Colors -->
+                    <div class="config-row config-row-colors">
+                        <!-- Color Picker MT4/MT5 (Strategy) -->
+                        <div class="config-item">
+                            <label class="config-label" for="color-strategy">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                                </svg>
+                                Couleur MT4/MT5
+                            </label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" id="color-strategy" class="color-picker" value="#00f5d4">
+                                <span class="color-label" id="color-strategy-label">#00f5d4</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Color Picker CSV (Asset) -->
+                        <div class="config-item">
+                            <label class="config-label" for="color-csv">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                                </svg>
+                                Couleur CSV (Actif)
+                            </label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" id="color-csv" class="color-picker" value="#f59e0b">
+                                <span class="color-label" id="color-csv-label">#f59e0b</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="import-actions">
+                    <button class="btn btn-primary btn-lg" id="btn-analyze" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                        <span>Lancer l'analyse</span>
+                        <div class="btn-glow"></div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Section Analysis -->
+            <section class="section section-analysis" id="section-analysis">
+                <div class="analysis-header">
+                    <div class="analysis-title">
+                        <h1 class="section-title">
+                            <span class="title-gradient">Analyse de Performance</span>
+                        </h1>
+                        <p class="analysis-subtitle" id="analysis-subtitle">-</p>
+                    </div>
+                    <div class="analysis-controls">
+                        <button class="btn btn-ghost" id="btn-back-import">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="19" y1="12" x2="5" y2="12"/>
+                                <polyline points="12 19 5 12 12 5"/>
+                            </svg>
+                            <span>Retour</span>
+                        </button>
+                        <button class="btn btn-primary" id="btn-go-simulation">
+                            <span>Simulation</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                                <polyline points="12 5 19 12 12 19"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card kpi-profit">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Profit Total</span>
+                            <span class="kpi-value" id="kpi-profit">$0.00</span>
+                            <span class="kpi-change positive" id="kpi-profit-pct">+0%</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card kpi-winrate">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Win Rate</span>
+                            <span class="kpi-value" id="kpi-winrate">0%</span>
+                            <span class="kpi-sub" id="kpi-wins-losses">0W / 0L</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card kpi-trades">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Trades</span>
+                            <span class="kpi-value" id="kpi-total-trades">0</span>
+                            <span class="kpi-sub" id="kpi-avg-trade">Moy: $0.00</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card kpi-drawdown">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 6l-9.5 9.5-5-5L1 18"/>
+                                <polyline points="17 6 23 6 23 12"/>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Max Drawdown</span>
+                            <span class="kpi-value negative" id="kpi-drawdown">0%</span>
+                            <span class="kpi-sub" id="kpi-drawdown-val">$0.00</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card kpi-factor">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="3" y1="9" x2="21" y2="9"/>
+                                <line x1="9" y1="21" x2="9" y2="9"/>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Profit Factor</span>
+                            <span class="kpi-value" id="kpi-profit-factor">0.00</span>
+                            <span class="kpi-sub" id="kpi-rr">R:R 0:0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card kpi-duration">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Durée Moyenne</span>
+                            <span class="kpi-value" id="kpi-avg-duration">0m</span>
+                            <span class="kpi-sub" id="kpi-duration-range">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <!-- Main Comparison Chart: MT4/MT5 vs CSV -->
+                    <div class="chart-card chart-comparison" style="grid-column: 1 / -1;">
+                        <div class="chart-header">
+                            <h3>📊 Comparaison des Stratégies</h3>
+                            <div class="chart-controls">
+                                <div class="chart-legend">
+                                    <span class="legend-item" id="legend-strategy">
+                                        <span class="legend-dot" style="background: #00f5d4;"></span>
+                                        MT4/MT5 (Stratégie)
+                                    </span>
+                                    <span class="legend-item" id="legend-csv">
+                                        <span class="legend-dot" style="background: #f59e0b;"></span>
+                                        CSV (Actif)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-body" style="height: 450px;">
+                            <canvas id="chart-comparison"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card chart-main">
+                        <div class="chart-header">
+                            <h3>Graphique de l'Actif & Trades</h3>
+                            <div class="chart-controls">
+                                <div class="chart-legend">
+                                    <span class="legend-item legend-buy">
+                                        <span class="legend-dot"></span>
+                                        Buy
+                                    </span>
+                                    <span class="legend-item legend-sell">
+                                        <span class="legend-dot"></span>
+                                        Sell
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-asset"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card chart-equity">
+                        <div class="chart-header">
+                            <h3>Courbes Balance & Equity (MT4/MT5)</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-equity"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card chart-distribution">
+                        <div class="chart-header">
+                            <h3>Distribution des Profits</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-distribution"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trade List -->
+                <div class="trades-section">
+                    <div class="trades-header">
+                        <h3>Historique des Trades</h3>
+                        <div class="trades-filters">
+                            <button class="filter-btn active" data-filter="all">Tous</button>
+                            <button class="filter-btn" data-filter="win">Gagnants</button>
+                            <button class="filter-btn" data-filter="loss">Perdants</button>
+                        </div>
+                    </div>
+                    <div class="trades-table-wrapper">
+                        <table class="trades-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Volume</th>
+                                    <th>Entrée</th>
+                                    <th>Sortie</th>
+                                    <th>P&L</th>
+                                    <th>Durée</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trades-tbody">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Simulation -->
+            <section class="section section-simulation" id="section-simulation">
+                <div class="simulation-header">
+                    <div class="simulation-title">
+                        <h1 class="section-title">
+                            <span class="title-gradient">Simulateur de Performance</span>
+                        </h1>
+                        <p class="simulation-subtitle">Ajustez les paramètres pour simuler différents scénarios</p>
+                    </div>
+                    <div class="simulation-controls">
+                        <button class="btn btn-ghost" id="btn-back-analysis">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="19" y1="12" x2="5" y2="12"/>
+                                <polyline points="12 19 5 12 12 5"/>
+                            </svg>
+                            <span>Retour à l'analyse</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="simulation-content">
+                    <!-- Simulation Controls Panel -->
+                    <div class="sim-panel">
+                        <div class="sim-panel-header">
+                            <h3>Paramètres de Simulation</h3>
+                        </div>
+                        <div class="sim-panel-body">
+                            <!-- Capital Input -->
+                            <div class="sim-control">
+                                <label class="sim-label">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="1" x2="12" y2="23"/>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                    </svg>
+                                    Capital de départ
+                                </label>
+                                <div class="sim-input-group">
+                                    <span class="input-prefix">$</span>
+                                    <input type="number" id="sim-capital" class="sim-input" value="10000" min="100" step="100">
+                                </div>
+                                <div class="sim-presets">
+                                    <button class="preset-btn" data-value="500">500</button>
+                                    <button class="preset-btn" data-value="1000">1K</button>
+                                    <button class="preset-btn" data-value="5000">5K</button>
+                                    <button class="preset-btn active" data-value="10000">10K</button>
+                                    <button class="preset-btn" data-value="50000">50K</button>
+                                    <button class="preset-btn" data-value="100000">100K</button>
+                                </div>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="sim-control">
+                                <label class="sim-label">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                        <line x1="16" y1="2" x2="16" y2="6"/>
+                                        <line x1="8" y1="2" x2="8" y2="6"/>
+                                        <line x1="3" y1="10" x2="21" y2="10"/>
+                                    </svg>
+                                    Plage temporelle
+                                </label>
+                                <div class="date-range-inputs">
+                                    <div class="date-input-wrapper">
+                                        <span class="date-label">Du</span>
+                                        <input type="date" id="sim-date-start" class="sim-input">
+                                    </div>
+                                    <div class="date-input-wrapper">
+                                        <span class="date-label">Au</span>
+                                        <input type="date" id="sim-date-end" class="sim-input">
+                                    </div>
+                                </div>
+                                <div class="sim-presets date-presets">
+                                    <button class="preset-btn date-preset" data-range="1m">1 mois</button>
+                                    <button class="preset-btn date-preset" data-range="3m">3 mois</button>
+                                    <button class="preset-btn date-preset" data-range="6m">6 mois</button>
+                                    <button class="preset-btn date-preset active" data-range="all">Tout</button>
+                                </div>
+                            </div>
+
+                            <!-- Leverage -->
+                            <div class="sim-control">
+                                <label class="sim-label">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="2" y1="12" x2="22" y2="12"/>
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                    </svg>
+                                    Effet de levier (multiplicateur)
+                                </label>
+                                <div class="leverage-slider">
+                                    <input type="range" id="sim-leverage" min="0.1" max="10" step="0.1" value="1">
+                                    <div class="leverage-value">
+                                        <span id="leverage-display">1.0</span>x
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-lg btn-full" id="btn-recalculate">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"/>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                                </svg>
+                                <span>Recalculer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div class="sim-results">
+                        <!-- Original vs Simulated Comparison -->
+                        <div class="comparison-cards">
+                            <div class="comparison-card original">
+                                <div class="comparison-header">
+                                    <span class="comparison-badge">Original</span>
+                                </div>
+                                <div class="comparison-stat main">
+                                    <span class="stat-label">Capital Initial</span>
+                                    <span class="stat-value" id="orig-capital">$1,000</span>
+                                </div>
+                                <div class="comparison-stat">
+                                    <span class="stat-label">Profit</span>
+                                    <span class="stat-value positive" id="orig-profit">+$300</span>
+                                </div>
+                                <div class="comparison-stat">
+                                    <span class="stat-label">Rendement</span>
+                                    <span class="stat-value" id="orig-return">+30%</span>
+                                </div>
+                                <div class="comparison-stat">
+                                    <span class="stat-label">Capital Final</span>
+                                    <span class="stat-value" id="orig-final">$1,300</span>
+                                </div>
+                            </div>
+
+                            <div class="comparison-arrow">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                    <polyline points="12 5 19 12 12 19"/>
+                                </svg>
+                            </div>
+
+                            <div class="comparison-card simulated">
+                                <div class="comparison-header">
+                                    <span class="comparison-badge">Simulation</span>
+                                </div>
+                                <div class="comparison-stat main">
+                                    <span class="stat-label">Capital Initial</span>
+                                    <span class="stat-value" id="sim-capital-display">$10,000</span>
+                                </div>
+                                <div class="comparison-stat">
+                                    <span class="stat-label">Profit Simulé</span>
+                                    <span class="stat-value positive" id="sim-profit">+$3,000</span>
+                                </div>
+                                <div class="comparison-stat">
+                                    <span class="stat-label">Rendement</span>
+                                    <span class="stat-value" id="sim-return">+30%</span>
+                                </div>
+                                <div class="comparison-stat">
+                                    <span class="stat-label">Capital Final</span>
+                                    <span class="stat-value" id="sim-final">$13,000</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Metrics -->
+                        <div class="sim-metrics-grid">
+                            <div class="sim-metric">
+                                <div class="metric-icon blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                                    </svg>
+                                </div>
+                                <div class="metric-content">
+                                    <span class="metric-label">Trades dans la période</span>
+                                    <span class="metric-value" id="sim-trades-count">0</span>
+                                </div>
+                            </div>
+                            <div class="sim-metric">
+                                <div class="metric-icon green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M23 6l-9.5 9.5-5-5L1 18"/>
+                                    </svg>
+                                </div>
+                                <div class="metric-content">
+                                    <span class="metric-label">Meilleur Trade</span>
+                                    <span class="metric-value positive" id="sim-best-trade">+$0</span>
+                                </div>
+                            </div>
+                            <div class="sim-metric">
+                                <div class="metric-icon red">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M23 18l-9.5-9.5-5 5L1 6"/>
+                                    </svg>
+                                </div>
+                                <div class="metric-content">
+                                    <span class="metric-label">Pire Trade</span>
+                                    <span class="metric-value negative" id="sim-worst-trade">-$0</span>
+                                </div>
+                            </div>
+                            <div class="sim-metric">
+                                <div class="metric-icon purple">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                        <line x1="3" y1="9" x2="21" y2="9"/>
+                                        <line x1="9" y1="21" x2="9" y2="9"/>
+                                    </svg>
+                                </div>
+                                <div class="metric-content">
+                                    <span class="metric-label">Gain Moyen</span>
+                                    <span class="metric-value" id="sim-avg-gain">$0</span>
+                                </div>
+                            </div>
+                            <div class="sim-metric">
+                                <div class="metric-icon orange">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                </div>
+                                <div class="metric-content">
+                                    <span class="metric-label">Rendement Mensuel</span>
+                                    <span class="metric-value" id="sim-monthly-return">0%</span>
+                                </div>
+                            </div>
+                            <div class="sim-metric">
+                                <div class="metric-icon cyan">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                    </svg>
+                                </div>
+                                <div class="metric-content">
+                                    <span class="metric-label">Projection Annuelle</span>
+                                    <span class="metric-value" id="sim-yearly-projection">$0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Simulation Chart -->
+                        <div class="chart-card sim-chart">
+                            <div class="chart-header">
+                                <h3>Évolution du Capital Simulé</h3>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="chart-simulation"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <span class="footer-version">v1.0.0 Beta</span>
+                <span class="footer-copy">© 2025</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" hidden>
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <svg viewBox="0 0 50 50">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="url(#spinnerGrad)" stroke-width="4"/>
+                    <defs>
+                        <linearGradient id="spinnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00f5d4"/>
+                            <stop offset="100%" style="stop-color:#7b2cbf"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="loading-text">Analyse en cours...</span>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="parser.js"></script>
+    <script src="charts.js"></script>
+    <script src="simulation.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

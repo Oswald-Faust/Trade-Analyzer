@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Analyzer | Analyse de Trading</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(26, 26, 37, 0.9);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --accent-primary: #00f5d4;
+            --accent-secondary: #7b2cbf;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --success: #00f5a0;
+            --danger: #ff4757;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f5f5f7;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --text-primary: #1a1a2e;
+            --text-secondary: rgba(26, 26, 46, 0.7);
+            --text-muted: rgba(26, 26, 46, 0.4);
+            --border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00f5d4, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .param-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .param-input {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .param-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.15);
+        }
+
+        .param-input[type="date"] { color-scheme: dark; }
+        [data-theme="light"] .param-input[type="date"] { color-scheme: light; }
+
+        /* Capital Slider */
+        .capital-slider-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .capital-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .capital-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .capital-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .capital-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+
+        .capital-slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        .capital-presets {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            flex: 1;
+            min-width: 50px;
+            padding: 0.4rem 0.5rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover, .preset-btn.active {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
+
+        /* File Upload */
+        .file-upload {
+            background: var(--bg-card);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload:hover {
+            border-color: var(--accent-primary);
+            background: rgba(0, 245, 212, 0.05);
+        }
+
+        .file-upload.has-file {
+            border-color: var(--success);
+            border-style: solid;
+        }
+
+        .file-upload-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .file-upload-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .file-upload-name {
+            font-size: 0.75rem;
+            color: var(--success);
+            margin-top: 0.5rem;
+            word-break: break-all;
+        }
+
+        .file-upload input { display: none; }
+
+        /* Color Picker */
+        .color-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .color-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.4rem;
+        }
+
+        .color-picker {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker::-webkit-color-swatch { border-radius: 4px; border: none; }
+
+        .color-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Analyze Button */
+        .analyze-btn {
+            background: linear-gradient(135deg, #00f5d4, #00d4aa);
+            border: none;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #0a0a0f;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: auto;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 245, 212, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            min-width: 120px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .stat-value.positive { color: var(--success); }
+        .stat-value.negative { color: var(--danger); }
+
+        /* Chart Tabs */
+        .chart-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chart-tab:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .chart-tab.active {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            position: relative;
+            min-height: 350px;
+        }
+
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .chart-placeholder svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 0.75rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-arrow {
+            font-size: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; max-height: 50vh; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">📈 Paramètres</h1>
+                <button class="theme-toggle" id="themeToggle" title="Thème">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Période d'analyse (début et fin) -->
+            <div class="param-group">
+                <label class="param-label">Période d'analyse</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <div style="flex: 1;">
+                        <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Du</span>
+                        <input type="date" class="param-input" id="start-date" style="width: 100%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Au</span>
+                        <input type="date" class="param-input" id="end-date" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Capital Slider (TEMPS RÉEL) -->
+            <div class="param-group">
+                <label class="param-label">Capital initial (devise)</label>
+                <div class="capital-slider-container">
+                    <div class="capital-display">
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Capital:</span>
+                        <span class="capital-value" id="capital-display">$1,000</span>
+                    </div>
+                    <input type="range" class="capital-slider" id="capital-slider" 
+                           min="100" max="100000" value="1000" step="100">
+                    <div class="capital-presets">
+                        <button class="preset-btn" data-value="500">500</button>
+                        <button class="preset-btn active" data-value="1000">1K</button>
+                        <button class="preset-btn" data-value="5000">5K</button>
+                        <button class="preset-btn" data-value="10000">10K</button>
+                        <button class="preset-btn" data-value="50000">50K</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MT4/MT5 File -->
+            <div class="param-group">
+                <label class="param-label">MT4 - MT5 (Rapport HTML)</label>
+                <div class="file-upload" id="dropzone-mt">
+                    <div class="file-upload-title">📄 Browse files</div>
+                    <div class="file-upload-hint">Fichier HTML de trading</div>
+                    <div class="file-upload-name" id="mt-filename"></div>
+                    <input type="file" id="file-mt" accept=".html,.htm">
+                </div>
+            </div>
+
+            <!-- Asset CSV File -->
+            <div class="param-group">
+                <label class="param-label">ACTIF BTC/SP500/OR... (CSV)</label>
+                <div class="file-upload" id="dropzone-asset">
+                    <div class="file-upload-title">📊 Browse files</div>
+                    <div class="file-upload-hint">Fichier CSV des prix (bougies)</div>
+                    <div class="file-upload-name" id="asset-filename"></div>
+                    <input type="file" id="file-asset" accept=".csv">
+                </div>
+            </div>
+
+            <!-- Color Pickers -->
+            <div class="param-group">
+                <label class="param-label">Couleurs des courbes</label>
+                <div class="color-row">
+                    <div class="color-item">
+                        <span style="font-size: 0.7rem; color: var(--text-secondary);">MT4/MT5</span>
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="color-strategy" value="#00f5d4">
+                            <span class="color-label" id="color-strategy-label">#00f5d4</span>
+                        </div>
+                    </div>
+                    <div class="color-item">
+                        <span style="font-size: 0.7rem; color: var(--text-secondary);">CSV (Actif)</span>
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="color-csv" value="#f59e0b">
+                            <span class="color-label" id="color-csv-label">#f59e0b</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyze Button -->
+            <button class="analyze-btn" id="btn-analyze" disabled>
+                🚀 Lancer l'analyse
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="chart-header">
+                <h2 class="chart-title">📈 Analyse de Performance</h2>
+                <div class="stats-row" id="stats-row" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-label">Profit Net</div>
+                        <div class="stat-value" id="stat-profit">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">ROI %</div>
+                        <div class="stat-value positive" id="stat-roi">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Win Rate</div>
+                        <div class="stat-value" id="stat-winrate">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Trades</div>
+                        <div class="stat-value" id="stat-trades">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Drawdown</div>
+                        <div class="stat-value negative" id="stat-drawdown">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Tabs -->
+            <div class="chart-tabs" id="chart-tabs" style="display: none;">
+                <button class="chart-tab active" data-chart="comparison">📊 Comparaison (MT4/MT5 vs CSV)</button>
+                <button class="chart-tab" data-chart="equity">📈 Balance & Equity</button>
+                <button class="chart-tab" data-chart="overlay">🕯️ Overlay (Prix + Trades)</button>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-placeholder" id="chart-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <p>Importez vos fichiers et lancez l'analyse<br>pour voir les courbes Balance & Equity</p>
+                </div>
+                <canvas id="main-chart" style="display: none;"></canvas>
+            </div>
+
+            <div class="chart-legend" id="chart-legend" style="display: none;">
+                <div class="legend-item" id="legend-strategy-item">
+                    <div class="legend-dot" id="legend-strategy" style="background: #00f5d4;"></div>
+                    <span>MT4/MT5 (Stratégie)</span>
+                </div>
+                <div class="legend-item" id="legend-csv-item">
+                    <div class="legend-dot" id="legend-csv" style="background: #f59e0b;"></div>
+                    <span>CSV (Actif)</span>
+                </div>
+                <div class="legend-item" id="legend-capital-item" style="display: none;">
+                    <div class="legend-dot" style="background: rgba(255,255,255,0.3); border: 1px dashed rgba(255,255,255,0.5);"></div>
+                    <span>Capital Initial</span>
+                </div>
+                <div class="legend-item" id="legend-buy" style="display: none;">
+                    <span class="legend-arrow" style="color: #00f5a0;">▲</span>
+                    <span>Achat</span>
+                </div>
+                <div class="legend-item" id="legend-sell" style="display: none;">
+                    <span class="legend-arrow" style="color: #ff4757;">▼</span>
+                    <span>Vente</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="parser.js"></script>
+    <script>
+        // State
+        const state = {
+            mtData: null,
+            assetData: null,
+            filteredTrades: null,
+            chart: null,
+            currentView: 'comparison' // 'comparison', 'equity' or 'overlay'
+        };
+
+        // DOM Elements
+        const el = {
+            startDate: document.getElementById('start-date'),
+            endDate: document.getElementById('end-date'),
+            capitalSlider: document.getElementById('capital-slider'),
+            capitalDisplay: document.getElementById('capital-display'),
+            dropzoneMt: document.getElementById('dropzone-mt'),
+            dropzoneAsset: document.getElementById('dropzone-asset'),
+            fileMt: document.getElementById('file-mt'),
+            fileAsset: document.getElementById('file-asset'),
+            mtFilename: document.getElementById('mt-filename'),
+            assetFilename: document.getElementById('asset-filename'),
+            colorStrategy: document.getElementById('color-strategy'),
+            colorCsv: document.getElementById('color-csv'),
+            colorStrategyLabel: document.getElementById('color-strategy-label'),
+            colorCsvLabel: document.getElementById('color-csv-label'),
+            btnAnalyze: document.getElementById('btn-analyze'),
+            chartPlaceholder: document.getElementById('chart-placeholder'),
+            mainChart: document.getElementById('main-chart'),
+            chartLegend: document.getElementById('chart-legend'),
+            statsRow: document.getElementById('stats-row'),
+            chartTabs: document.getElementById('chart-tabs'),
+            legendStrategy: document.getElementById('legend-strategy'),
+            legendCsv: document.getElementById('legend-csv'),
+            legendStrategyItem: document.getElementById('legend-strategy-item'),
+            legendCsvItem: document.getElementById('legend-csv-item'),
+            legendCapitalItem: document.getElementById('legend-capital-item'),
+            legendBuy: document.getElementById('legend-buy'),
+            legendSell: document.getElementById('legend-sell'),
+            themeToggle: document.getElementById('themeToggle'),
+            presetBtns: document.querySelectorAll('.preset-btn')
+        };
+
+        // Theme
+        el.themeToggle.addEventListener('click', () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        });
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+
+        // ===== CAPITAL SLIDER - TEMPS RÉEL =====
+        el.capitalSlider.addEventListener('input', () => {
+            const value = parseInt(el.capitalSlider.value);
+            el.capitalDisplay.textContent = '$' + value.toLocaleString();
+            
+            // Update preset buttons
+            el.presetBtns.forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.value) === value);
+            });
+            
+            // MISE À JOUR TEMPS RÉEL des stats
+            if (state.mtData) {
+                updateStatsRealtime();
+            }
+        });
+
+        // Preset buttons
+        el.presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const value = parseInt(btn.dataset.value);
+                el.capitalSlider.value = value;
+                el.capitalDisplay.textContent = '$' + value.toLocaleString();
+                el.presetBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if (state.mtData) updateStatsRealtime();
+            });
+        });
+
+        // Color pickers
+        el.colorStrategy.addEventListener('input', (e) => {
+            el.colorStrategyLabel.textContent = e.target.value;
+            el.legendStrategy.style.background = e.target.value;
+            if (state.chart) createChart();
+        });
+
+        el.colorCsv.addEventListener('input', (e) => {
+            el.colorCsvLabel.textContent = e.target.value;
+            el.legendCsv.style.background = e.target.value;
+            if (state.chart) createChart();
+        });
+
+        // File uploads
+        el.dropzoneMt.addEventListener('click', () => el.fileMt.click());
+        el.dropzoneAsset.addEventListener('click', () => el.fileAsset.click());
+
+        el.fileMt.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            el.mtFilename.textContent = file.name;
+            el.dropzoneMt.classList.add('has-file');
+            
+            const content = await readFile(file);
+            const parser = new MT5Parser();
+            const result = await parser.parse(content);
+            
+            if (result.success) {
+                state.mtData = result;
+                checkCanAnalyze();
+            } else {
+                alert('Erreur: ' + result.error);
+            }
+        });
+
+        el.fileAsset.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            el.assetFilename.textContent = file.name;
+            el.dropzoneAsset.classList.add('has-file');
+            
+            const content = await readFile(file);
+            const parser = new CSVParser();
+            const result = await parser.parse(content);
+            
+            if (result.success) {
+                state.assetData = result;
+            }
+        });
+
+        function readFile(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                
+                if (file.name.endsWith('.html') || file.name.endsWith('.htm')) {
+                    const binaryReader = new FileReader();
+                    binaryReader.onload = (e) => {
+                        const arr = new Uint8Array(e.target.result);
+                        if (arr[0] === 0xFF && arr[1] === 0xFE) {
+                            resolve(new TextDecoder('utf-16le').decode(arr));
+                        } else {
+                            reader.readAsText(file);
+                        }
+                    };
+                    binaryReader.readAsArrayBuffer(file);
+                } else {
+                    reader.readAsText(file);
+                }
+            });
+        }
+
+        function checkCanAnalyze() {
+            el.btnAnalyze.disabled = !state.mtData;
+        }
+
+        // Chart tabs
+        document.querySelectorAll('.chart-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                state.currentView = tab.dataset.chart;
+                createChart();
+                updateLegend();
+            });
+        });
+
+        function updateLegend() {
+            if (state.currentView === 'comparison') {
+                el.legendStrategyItem.style.display = 'flex';
+                el.legendCsvItem.style.display = state.assetData ? 'flex' : 'none';
+                el.legendCapitalItem.style.display = 'flex';
+                el.legendBuy.style.display = 'none';
+                el.legendSell.style.display = 'none';
+            } else if (state.currentView === 'overlay') {
+                el.legendStrategyItem.style.display = 'none';
+                el.legendCsvItem.style.display = 'none';
+                el.legendCapitalItem.style.display = 'none';
+                el.legendBuy.style.display = 'flex';
+                el.legendSell.style.display = 'flex';
+            } else {
+                // equity view
+                el.legendStrategyItem.style.display = 'flex';
+                el.legendCsvItem.style.display = 'none';
+                el.legendCapitalItem.style.display = 'none';
+                el.legendBuy.style.display = 'none';
+                el.legendSell.style.display = 'none';
+            }
+        }
+
+        // Analyze button
+        el.btnAnalyze.addEventListener('click', runAnalysis);
+
+        function runAnalysis() {
+            const trades = state.mtData.trades;
+            console.log('=== ANALYSE ===');
+            console.log('Nombre de trades parsés:', trades.length);
+            if (trades.length > 0) {
+                console.log('Premier trade:', trades[0]);
+                console.log('Dernier trade:', trades[trades.length - 1]);
+            }
+            
+            const startDateValue = el.startDate.value;
+            const endDateValue = el.endDate.value;
+            
+            // Filter by date range (début ET fin)
+            let filteredTrades = trades;
+            
+            if (startDateValue || endDateValue) {
+                const startDate = startDateValue ? new Date(startDateValue) : null;
+                const endDate = endDateValue ? new Date(endDateValue + 'T23:59:59') : null;
+                
+                filteredTrades = trades.filter(t => {
+                    const tradeDate = t.closeTime || t.openTime;
+                    if (!tradeDate) return true;
+                    if (startDate && tradeDate < startDate) return false;
+                    if (endDate && tradeDate > endDate) return false;
+                    return true;
+                });
+            }
+            
+            state.filteredTrades = filteredTrades;
+            
+            // Show UI
+            el.chartPlaceholder.style.display = 'none';
+            el.mainChart.style.display = 'block';
+            el.chartLegend.style.display = 'flex';
+            el.statsRow.style.display = 'flex';
+            el.chartTabs.style.display = 'flex';
+            
+            createChart();
+            updateStatsRealtime();
+        }
+
+        // ===== MISE À JOUR TEMPS RÉEL DES STATS =====
+        function updateStatsRealtime() {
+            const trades = state.filteredTrades || state.mtData.trades;
+            const capital = parseInt(el.capitalSlider.value) || 1000;
+            
+            const wins = trades.filter(t => t.profit > 0);
+            const losses = trades.filter(t => t.profit < 0);
+            const totalProfit = trades.reduce((sum, t) => sum + (t.profit || 0), 0);
+            const grossProfit = wins.reduce((sum, t) => sum + t.profit, 0);
+            const grossLoss = Math.abs(losses.reduce((sum, t) => sum + t.profit, 0));
+            
+            // ROI calculé en fonction du capital choisi
+            const roi = (totalProfit / capital) * 100;
+            
+            // Drawdown
+            let peak = capital, maxDD = 0, equity = capital;
+            trades.forEach(t => {
+                equity += t.profit || 0;
+                if (equity > peak) peak = equity;
+                const dd = peak - equity;
+                if (dd > maxDD) maxDD = dd;
+            });
+            const maxDDPct = peak > 0 ? (maxDD / peak) * 100 : 0;
+            
+            // Win rate
+            const winRate = trades.length > 0 ? (wins.length / trades.length) * 100 : 0;
+            
+            // Update display
+            document.getElementById('stat-profit').textContent = formatCurrency(totalProfit);
+            document.getElementById('stat-profit').className = 'stat-value ' + (totalProfit >= 0 ? 'positive' : 'negative');
+            
+            document.getElementById('stat-roi').textContent = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
+            document.getElementById('stat-roi').className = 'stat-value ' + (roi >= 0 ? 'positive' : 'negative');
+            
+            document.getElementById('stat-winrate').textContent = winRate.toFixed(1) + '%';
+            document.getElementById('stat-trades').textContent = trades.length;
+            document.getElementById('stat-drawdown').textContent = '-' + maxDDPct.toFixed(1) + '%';
+            
+            // Update chart with new capital (for balance curve starting point)
+            if (state.chart) {
+                createChart();
+            }
+        }
+
+        function createChart() {
+            const trades = state.filteredTrades || state.mtData.trades;
+            const capital = parseInt(el.capitalSlider.value) || 1000;
+            const strategyColor = el.colorStrategy.value;
+            const csvColor = el.colorCsv.value;
+            
+            if (state.chart) state.chart.destroy();
+            
+            const ctx = el.mainChart.getContext('2d');
+            
+            if (state.currentView === 'comparison') {
+                // ===== COMPARISON VIEW: MT4/MT5 vs CSV curves =====
+                createComparisonChart(ctx, trades, capital, strategyColor, csvColor);
+            } else if (state.currentView === 'overlay' && state.assetData) {
+                // ===== OVERLAY VIEW: Candlesticks + Trade Arrows =====
+                createOverlayChart(ctx, trades, capital);
+            } else {
+                // ===== EQUITY VIEW: Balance & Equity curves =====
+                createEquityChart(ctx, trades, capital, strategyColor, '#7b2cbf');
+            }
+        }
+
+        // ===== NEW: COMPARISON CHART (MT4/MT5 vs CSV) =====
+        function createComparisonChart(ctx, trades, capital, strategyColor, csvColor) {
+            // Prepare MT4/MT5 curve (monthly gains - losses)
+            const strategyCurve = prepareStrategyCurve(trades, capital);
+            
+            // Prepare CSV curve (monthly % changes)
+            const csvCurve = state.assetData ? prepareCsvCurve(state.assetData.data, capital) : [];
+            
+            // Gradients
+            const gradStrategy = ctx.createLinearGradient(0, 0, 0, 350);
+            gradStrategy.addColorStop(0, strategyColor + '50');
+            gradStrategy.addColorStop(1, strategyColor + '00');
+            
+            const gradCsv = ctx.createLinearGradient(0, 0, 0, 350);
+            gradCsv.addColorStop(0, csvColor + '40');
+            gradCsv.addColorStop(1, csvColor + '00');
+            
+            const datasets = [];
+            
+            // MT4/MT5 Strategy curve
+            if (strategyCurve.length > 0) {
+                datasets.push({
+                    label: 'MT4/MT5 (Stratégie)',
+                    data: strategyCurve,
+                    borderColor: strategyColor,
+                    backgroundColor: gradStrategy,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.2,
+                    pointRadius: 4,
+                    pointBackgroundColor: strategyColor,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    order: 0
+                });
+            }
+            
+            // CSV Asset curve
+            if (csvCurve.length > 0) {
+                datasets.push({
+                    label: 'CSV (Actif)',
+                    data: csvCurve,
+                    borderColor: csvColor,
+                    backgroundColor: gradCsv,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: csvColor,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 1,
+                    order: 1
+                });
+            }
+            
+            // Capital baseline
+            if (strategyCurve.length > 0 || csvCurve.length > 0) {
+                const allDates = [...strategyCurve, ...csvCurve].map(d => d.x).filter(d => d);
+                if (allDates.length > 0) {
+                    allDates.sort((a, b) => a - b);
+                    datasets.push({
+                        label: 'Capital Initial',
+                        data: [
+                            { x: allDates[0], y: capital },
+                            { x: allDates[allDates.length - 1], y: capital }
+                        ],
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        borderWidth: 2,
+                        borderDash: [8, 4],
+                        fill: false,
+                        pointRadius: 0,
+                        order: 2
+                    });
+                }
+            }
+            
+            state.chart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    ...getChartOptions('$'),
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    if (items.length > 0) {
+                                        const date = new Date(items[0].parsed.x);
+                                        return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                                    }
+                                    return '';
+                                },
+                                label: (context) => {
+                                    const label = context.dataset.label || '';
+                                    const value = '$' + context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                    return `${label}: ${value}`;
+                                },
+                                afterLabel: (context) => {
+                                    const diff = context.parsed.y - capital;
+                                    const percent = (diff / capital * 100).toFixed(2);
+                                    const sign = diff >= 0 ? '+' : '';
+                                    return `${sign}$${diff.toFixed(2)} (${sign}${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Calculate monthly gains - losses for MT4/MT5 trades
+        function prepareStrategyCurve(trades, initialCapital) {
+            console.log('=== prepareStrategyCurve ===');
+            console.log('Trades reçus:', trades ? trades.length : 0);
+            
+            if (!trades || trades.length === 0) {
+                console.log('Aucun trade, retourne courbe vide');
+                return [];
+            }
+            
+            // Group by month
+            const monthlyPL = {};
+            
+            trades.forEach(trade => {
+                const date = trade.closeTime || trade.openTime;
+                if (!date) return;
+                
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (!monthlyPL[monthKey]) {
+                    monthlyPL[monthKey] = {
+                        date: new Date(date.getFullYear(), date.getMonth(), 15),
+                        gains: 0,
+                        losses: 0,
+                        netPL: 0
+                    };
+                }
+                
+                const profit = trade.profit || 0;
+                if (profit > 0) {
+                    monthlyPL[monthKey].gains += profit;
+                } else {
+                    monthlyPL[monthKey].losses += profit; // already negative
+                }
+                monthlyPL[monthKey].netPL += profit; // gains - losses
+            });
+            
+            // Build cumulative curve
+            const sortedMonths = Object.keys(monthlyPL).sort();
+            let cumulativeCapital = initialCapital;
+            const curveData = [];
+            
+            // Starting point
+            if (sortedMonths.length > 0) {
+                const firstDate = monthlyPL[sortedMonths[0]].date;
+                curveData.push({
+                    x: new Date(firstDate.getFullYear(), firstDate.getMonth(), 1),
+                    y: initialCapital
+                });
+            }
+            
+            sortedMonths.forEach(monthKey => {
+                const monthData = monthlyPL[monthKey];
+                cumulativeCapital += monthData.netPL; // Add gains - losses
+                curveData.push({
+                    x: monthData.date,
+                    y: cumulativeCapital
+                });
+            });
+            
+            console.log('Strategy curve générée:', curveData.length, 'points');
+            if (curveData.length > 0) {
+                console.log('Premier point:', curveData[0]);
+                console.log('Dernier point:', curveData[curveData.length - 1]);
+            }
+            
+            return curveData;
+        }
+
+        // Calculate monthly % changes from CSV and apply to initial capital
+        function prepareCsvCurve(csvData, initialCapital) {
+            if (!csvData || csvData.length === 0) return [];
+            
+            // Sort by date ascending
+            const sortedData = [...csvData].sort((a, b) => a.date - b.date);
+            
+            // Group by month
+            const monthlyData = {};
+            
+            sortedData.forEach(row => {
+                const date = row.date;
+                if (!date) return;
+                
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (!monthlyData[monthKey]) {
+                    monthlyData[monthKey] = {
+                        date: new Date(date.getFullYear(), date.getMonth(), 15),
+                        changes: []
+                    };
+                }
+                
+                // Parse change % (e.g., "-1.96%")
+                let changePercent = 0;
+                if (row.change) {
+                    const parsed = parseFloat(String(row.change).replace('%', '').replace(',', '.'));
+                    if (!isNaN(parsed)) {
+                        changePercent = parsed;
+                    }
+                }
+                monthlyData[monthKey].changes.push(changePercent);
+            });
+            
+            // Build cumulative curve
+            const sortedMonths = Object.keys(monthlyData).sort();
+            let cumulativeCapital = initialCapital;
+            const curveData = [];
+            
+            // Starting point
+            if (sortedMonths.length > 0) {
+                const firstDate = monthlyData[sortedMonths[0]].date;
+                curveData.push({
+                    x: new Date(firstDate.getFullYear(), firstDate.getMonth(), 1),
+                    y: initialCapital
+                });
+            }
+            
+            sortedMonths.forEach(monthKey => {
+                const monthData = monthlyData[monthKey];
+                // Sum all daily changes in the month
+                const totalChange = monthData.changes.reduce((sum, c) => sum + c, 0);
+                // Apply % change to cumulative capital
+                cumulativeCapital = cumulativeCapital * (1 + totalChange / 100);
+                curveData.push({
+                    x: monthData.date,
+                    y: cumulativeCapital
+                });
+            });
+            
+            return curveData;
+        }
+
+        function createEquityChart(ctx, trades, capital, balanceColor, equityColor) {
+            // Balance data
+            let balance = capital;
+            const balanceData = [];
+            
+            if (trades.length > 0 && trades[0].closeTime) {
+                balanceData.push({ x: new Date(trades[0].closeTime.getTime() - 86400000), y: balance });
+            }
+            
+            trades.forEach(trade => {
+                if (trade.closeTime && !isNaN(trade.profit)) {
+                    balance += trade.profit;
+                    balanceData.push({ x: trade.closeTime, y: balance });
+                }
+            });
+            
+            // Equity data (with fluctuations)
+            const equityData = [];
+            let runningBalance = capital;
+            
+            if (trades.length > 0 && trades[0].openTime) {
+                equityData.push({ x: new Date(trades[0].openTime.getTime() - 86400000), y: runningBalance });
+            }
+            
+            trades.forEach(trade => {
+                if (trade.openTime && trade.closeTime && !isNaN(trade.profit)) {
+                    equityData.push({ x: trade.openTime, y: runningBalance });
+                    const midTime = new Date((trade.openTime.getTime() + trade.closeTime.getTime()) / 2);
+                    equityData.push({ x: midTime, y: runningBalance + trade.profit * 0.6 });
+                    runningBalance += trade.profit;
+                    equityData.push({ x: trade.closeTime, y: runningBalance });
+                }
+            });
+            
+            // Gradients
+            const gradBalance = ctx.createLinearGradient(0, 0, 0, 350);
+            gradBalance.addColorStop(0, balanceColor + '50');
+            gradBalance.addColorStop(1, balanceColor + '00');
+            
+            const gradEquity = ctx.createLinearGradient(0, 0, 0, 350);
+            gradEquity.addColorStop(0, equityColor + '40');
+            gradEquity.addColorStop(1, equityColor + '00');
+            
+            state.chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Balance',
+                            data: balanceData,
+                            borderColor: balanceColor,
+                            backgroundColor: gradBalance,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.2,
+                            pointRadius: 0,
+                            order: 1
+                        },
+                        {
+                            label: 'Equity',
+                            data: equityData,
+                            borderColor: equityColor,
+                            backgroundColor: gradEquity,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            order: 0
+                        }
+                    ]
+                },
+                options: getChartOptions('$')
+            });
+        }
+
+        function createOverlayChart(ctx, trades, capital) {
+            // ===== OVERLAY: Prix du marché + Flèches trades =====
+            const assetData = state.assetData.data;
+            
+            // Price line data
+            const priceData = assetData.map(d => ({ x: d.date, y: d.close }));
+            
+            // Trade markers
+            const buyMarkers = [];
+            const sellMarkers = [];
+            
+            trades.forEach(trade => {
+                const tradeDate = trade.openTime;
+                if (!tradeDate) return;
+                
+                // Find closest price
+                let closestPrice = null;
+                let minDiff = Infinity;
+                assetData.forEach(d => {
+                    const diff = Math.abs(d.date - tradeDate);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestPrice = d.close;
+                    }
+                });
+                
+                if (closestPrice) {
+                    const marker = {
+                        x: tradeDate,
+                        y: closestPrice,
+                        profit: trade.profit
+                    };
+                    
+                    if (trade.type === 'buy') {
+                        buyMarkers.push(marker);
+                    } else {
+                        sellMarkers.push(marker);
+                    }
+                }
+            });
+            
+            state.chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Prix',
+                            data: priceData,
+                            borderColor: '#ffffff50',
+                            backgroundColor: 'rgba(255,255,255,0.05)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.1,
+                            pointRadius: 0,
+                            order: 2
+                        },
+                        {
+                            label: 'Achats',
+                            data: buyMarkers,
+                            borderColor: '#00f5a0',
+                            backgroundColor: '#00f5a0',
+                            pointStyle: 'triangle',
+                            pointRadius: 10,
+                            pointHoverRadius: 14,
+                            showLine: false,
+                            order: 0
+                        },
+                        {
+                            label: 'Ventes',
+                            data: sellMarkers,
+                            borderColor: '#ff4757',
+                            backgroundColor: '#ff4757',
+                            pointStyle: 'triangle',
+                            rotation: 180,
+                            pointRadius: 10,
+                            pointHoverRadius: 14,
+                            showLine: false,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    ...getChartOptions('$'),
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    if (ctx.dataset.label === 'Prix') {
+                                        return `Prix: $${ctx.parsed.y.toLocaleString()}`;
+                                    }
+                                    const marker = ctx.raw;
+                                    const profitStr = marker.profit >= 0 ? '+$' + marker.profit.toFixed(2) : '-$' + Math.abs(marker.profit).toFixed(2);
+                                    return `${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()} (${profitStr})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getChartOptions(prefix) {
+            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+            const textColor = isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)';
+            const gridColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)';
+            const axisColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)';
+            
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDark ? 'rgba(20,20,30,0.95)' : 'rgba(255,255,255,0.95)',
+                        titleColor: isDark ? '#fff' : '#000',
+                        bodyColor: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)',
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: { 
+                            unit: 'month', 
+                            displayFormats: { 
+                                month: 'MMM yyyy',
+                                day: 'dd MMM'
+                            }
+                        },
+                        grid: { 
+                            color: gridColor,
+                            lineWidth: 1,
+                            drawTicks: true,
+                            tickLength: 8
+                        },
+                        border: {
+                            color: axisColor,
+                            width: 2
+                        },
+                        ticks: { 
+                            color: textColor,
+                            font: { size: 12, weight: '500' },
+                            maxTicksLimit: 10,
+                            padding: 8
+                        },
+                        title: {
+                            display: true,
+                            text: 'MOIS',
+                            color: textColor,
+                            font: { size: 13, weight: 'bold' },
+                            padding: { top: 10 }
+                        }
+                    },
+                    y: {
+                        position: 'right',
+                        grid: { 
+                            color: gridColor,
+                            lineWidth: 1,
+                            drawTicks: true,
+                            tickLength: 8
+                        },
+                        border: {
+                            color: axisColor,
+                            width: 2
+                        },
+                        ticks: { 
+                            color: textColor,
+                            font: { size: 12, weight: '500' },
+                            padding: 8,
+                            callback: (v) => prefix + v.toLocaleString()
+                        },
+                        title: {
+                            display: true,
+                            text: 'VALEUR ($)',
+                            color: textColor,
+                            font: { size: 13, weight: 'bold' },
+                            padding: { bottom: 10 }
+                        }
+                    }
+                }
+            };
+        }
+
+        function formatCurrency(value) {
+            const sign = value >= 0 ? '+' : '';
+            return sign + '$' + Math.abs(value).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+    </script>
+</body>
+</html>
